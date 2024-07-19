@@ -3,21 +3,25 @@ import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Prisma } from '@prisma/client';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle() //Skip Throttling
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) {}
+  constructor(private readonly employeesService: EmployeesService) { }
 
   @Post()
   create(@Body() createEmployeeDto: Prisma.EmployeeCreateInput) {
     return this.employeesService.create(createEmployeeDto);
   }
 
+  @SkipThrottle({ default: false })  // Enable Throttling
   @Get()
-  findAll(@Query('role') role?: ('Standard' | 'Basic' | 'Premium') ) {
+  findAll(@Query('role') role?: ('Standard' | 'Basic' | 'Premium')) {
     return this.employeesService.findAll(role);
   }
 
+  @Throttle({ short: { limit: 10, ttl: 1000 }, long: { limit: 100, ttl: 10000 } }) //Override Throttling from app.module
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.employeesService.findOne(+id);

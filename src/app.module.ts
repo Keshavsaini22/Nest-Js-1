@@ -5,10 +5,29 @@ import { UsersModule } from './users/users.module';
 import { DatabaseModule } from './database/database.module';
 import { EmployeesModule } from './employees/employees.module';
 import { ReportsModule } from './reports/reports.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { MyLoggerModule } from './my-logger/my-logger.module';
 
 @Module({
-  imports: [UsersModule, DatabaseModule, EmployeesModule, ReportsModule],
+  imports: [
+    UsersModule,
+    DatabaseModule,
+    EmployeesModule,
+    ReportsModule,
+    ThrottlerModule.forRoot([{
+      name: 'short',
+      ttl: 60000,    //10 REQUESTS PER MINUTE
+      limit: 10
+    },
+    {
+      name: 'long',
+      ttl: 60000,
+      limit: 100
+    }]),
+    MyLoggerModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule { }
